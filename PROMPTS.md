@@ -319,3 +319,81 @@ Langkah pengerjaan:
    - Ubah isi `page.tsx` menjadi ringkasan statistik (misal: Card Selamat Datang, Card Status Sistem, dan Quick Action Cards) tanpa perlu mengulang komponen Header/Sidebar secara manual.
 
 JANGAN mengubah logic `backend` atau file `.env`. Fokus HANYA pada pembentukan struktur Layout Dashboard di frontend.
+
+---
+
+### 📝 Prompt #08 - Fitur Edit Profil & Ubah Password (Backend & Frontend)
+**Target:** Folder `backend/` & `frontend/`  
+**Model AI Recommendation:** Gemini Flash (Low Tier)
+
+---
+BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
+---
+
+Tugasmu adalah membuat fitur Edit Profil dan Ubah Password lengkap dari sisi Backend dan Frontend.
+
+Langkah pengerjaan:
+
+1. Update Backend (`backend/src/controllers/authController.ts` & `backend/src/routes/authRoutes.ts`):
+   - Buat endpoint `PUT /api/auth/profile`:
+     - Membutuhkan `authMiddleware`.
+     - Menerima `name` dari body request.
+     - Update nama user di tabel `karuna_users` berdasarkan `req.user.id`.
+     - Kembalikan data user yang terbaru.
+   - Buat endpoint `PUT /api/auth/change-password`:
+     - Membutuhkan `authMiddleware`.
+     - Menerima `oldPassword` dan `newPassword`.
+     - Cek password lama dengan `bcrypt.compare()`. Jika salah, kembalikan status `400` ("Password lama tidak sesuai").
+     - Hash `newPassword` lalu update di tabel `karuna_users`.
+
+2. Update Frontend API Client (`frontend/src/lib/api.ts`):
+   - Tambahkan fungsi pemanggilan endpoint:
+     - `updateProfile(name: string)`
+     - `changePassword(data: { oldPassword, newPassword })`
+
+3. Update Auth Context (`frontend/src/context/AuthContext.tsx`):
+   - Tambahkan fungsi `updateProfileState(updatedUser)` untuk memperbarui state `user` secara langsung di memory aplikasi tanpa perlu reload.
+
+4. Buat Halaman Profil UI (`frontend/src/app/dashboard/profile/page.tsx`):
+   - Gunakan komponen `shadcn/ui` (`Card`, `Input`, `Button`).
+   - Buat 2 section/form terpisah:
+     1. **Form Informasi Profil:** Menampilkan email (disabled/read-only) dan input Nama Lengkap + Tombol "Simpan Perubahan".
+     2. **Form Ubah Password:** Input Password Saat Ini, Password Baru, dan Konfirmasi Password Baru + Tombol "Ubah Password".
+   - Tampilkan alert/pesan sukses atau error di bawah form saat submit.
+
+JANGAN mengubah struktur tabel database di Supabase.
+
+
+---
+
+### 📝 Prompt #09 - Implementasi Modul CRUD Pertama (`karuna_items`)
+**Target:** Folder `backend/` & `frontend/`  
+**Model AI Recommendation:** Gemini Flash (Low Tier)
+
+---
+BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
+---
+
+Tugasmu adalah membuat modul CRUD lengkap untuk pengelolaan data (`karuna_items`) dari sisi Backend dan Frontend.
+
+Langkah pengerjaan:
+
+1. Update Konstanta Tabel (`backend/src/utils/tables.ts`):
+   - Tambahkan `ITEMS: 'karuna_items'` ke dalam object `TABLES`.
+
+2. Buat Backend Controller & Routes (`backend/src/controllers/itemController.ts` & `backend/src/routes/itemRoutes.ts`):
+   - Seluruh endpoint WAJIB menggunakan `authMiddleware`.
+   - `GET /api/items`: Mengambil daftar item milik user yang sedang login (`user_id = req.user.id`).
+   - `POST /api/items`: Menambahkan item baru (menerima `title`, `description`, `category`, `status`).
+   - `PUT /api/items/:id`: Mengubah item berdasarkan `id` dan `user_id`.
+   - `DELETE /api/items/:id`: Menghapus item berdasarkan `id` dan `user_id`.
+   - Daftarkan `itemRoutes` di `backend/src/app.ts` pada path `/api/items`.
+
+3. Buat Halaman UI Management (`frontend/src/app/dashboard/items/page.tsx`):
+   - Gunakan komponen `shadcn/ui` (`Card`, `Button`, `Input`, `Badge`).
+   - Sediakan tombol "Tambah Item" yang membuka Modal Form (Dialog) untuk input/edit data.
+   - Tampilkan daftar item dalam bentuk Tabel atau Grid Card yang rapi.
+   - Tambahkan aksi tombol Edit dan Hapus pada setiap baris data.
+   - Tambahkan menu navigasi **📦 Data Items** (`/dashboard/items`) di file `Sidebar.tsx`.
+
+JANGAN mengganggu endpoint autentikasi yang sudah ada. Fokus HANYA pada modul `karuna_items`.

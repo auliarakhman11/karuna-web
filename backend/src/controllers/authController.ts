@@ -7,6 +7,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from '../utils/jwt';
+import { AuthenticatedRequest } from '../middlewares/authMiddleware';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -201,6 +202,96 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     });
 
     res.status(200).json({ message: 'Logout successful' });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+export const updateProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { name } = req.body;
+    const userId = req.user?.userId;
+
+    if (!name || name.trim() === '') {
+      res.status(400).json({ message: 'Nama tidak boleh kosong' });
+      return;
+    }
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const { data: updatedUser, error } = await supabase
+      .from(TABLES.USERS)
+      .update({ name: name.trim(), updated_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select('id, email, name, updated_at')
+      .single();
+
+    if (error) {
+      res.status(500).json({ message: 'Gagal memperbarui profil', error: error.message });
+      return;
+    }
+
+    res.status(200).json({
+      message: 'Profil berhasil diperbarui',
+      user: updatedUser,
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+export const changePassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user?.userId;
+
+    if (!oldPassword || !newPassword) {
+      res.status(400).json({ message: 'Password lama dan password baru wajib diisi' });
+      return;
+    }
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // Fetch user's current password
+    const { data: user, error: findError } = await supabase
+      .from(TABLES.USERS)
+      .select('password')
+      .eq('id', userId)
+      .single();
+
+    if (findError || !user) {
+      res.status(404).json({ message: 'User tidak ditemukan' });
+      return;
+    }
+
+    // Verify old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      res.status(400).json({ message: 'Password lama tidak sesuai' });
+      return;
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    const { error: updateError } = await supabase
+      .from(TABLES.USERS)
+      .update({ password: hashedNewPassword, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (updateError) {
+      res.status(500).json({ message: 'Gagal mengubah password', error: updateError.message });
+      return;
+    }
+
+    res.status(200).json({ message: 'Password berhasil diubah' });
   } catch (error: any) {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }

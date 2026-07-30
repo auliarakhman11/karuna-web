@@ -99,4 +99,12 @@ api.interceptors.response.use(
   }
 );
 
+// --- Named API functions ---
+
+export const updateProfile = (name: string) =>
+  api.put('/auth/profile', { name });
+
+export const changePassword = (data: { oldPassword: string; newPassword: string }) =>
+  api.put('/auth/change-password', data);
+
 export default api;
