@@ -366,7 +366,7 @@ JANGAN mengubah struktur tabel database di Supabase.
 
 ---
 
-### 📝 Prompt #09 - Implementasi Modul CRUD Pertama (`karuna_items`)
+### 📝 Prompt #09 - Modul Inventaris Toko Bangunan & Kayu (Kategori Dinamis & CRUD Items)
 **Target:** Folder `backend/` & `frontend/`  
 **Model AI Recommendation:** Gemini Flash (Low Tier)
 
@@ -374,26 +374,131 @@ JANGAN mengubah struktur tabel database di Supabase.
 BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
 ---
 
-Tugasmu adalah membuat modul CRUD lengkap untuk pengelolaan data (`karuna_items`) dari sisi Backend dan Frontend.
+Tugasmu adalah membuat modul Kategori dan Inventaris Barang khusus Toko Bangunan & Kayu dari sisi Backend dan Frontend.
 
 Langkah pengerjaan:
 
-1. Update Konstanta Tabel (`backend/src/utils/tables.ts`):
-   - Tambahkan `ITEMS: 'karuna_items'` ke dalam object `TABLES`.
+1. Update `backend/src/utils/tables.ts`:
+   - Tambahkan `CATEGORIES: 'karuna_categories'` dan `ITEMS: 'karuna_items'` ke object `TABLES`.
 
-2. Buat Backend Controller & Routes (`backend/src/controllers/itemController.ts` & `backend/src/routes/itemRoutes.ts`):
-   - Seluruh endpoint WAJIB menggunakan `authMiddleware`.
-   - `GET /api/items`: Mengambil daftar item milik user yang sedang login (`user_id = req.user.id`).
-   - `POST /api/items`: Menambahkan item baru (menerima `title`, `description`, `category`, `status`).
-   - `PUT /api/items/:id`: Mengubah item berdasarkan `id` dan `user_id`.
-   - `DELETE /api/items/:id`: Menghapus item berdasarkan `id` dan `user_id`.
-   - Daftarkan `itemRoutes` di `backend/src/app.ts` pada path `/api/items`.
+2. Buat Backend Endpoint Kategori & Items (`backend/src/routes/` & `backend/src/controllers/`):
+   - `GET /api/categories`: Mengambil semua daftar kategori dari `karuna_categories` untuk isi Dropdown di frontend.
+   - `GET /api/items`: Mengambil daftar barang (join dengan `karuna_categories` untuk mengambil nama kategori). Filter berdasarkan `user_id`.
+   - `POST /api/items`: Menambah barang baru (menerima `name`, `category_id`, `unit`, `price`, `stock`, `description`).
+   - `PUT /api/items/:id`: Mengubah data barang.
+   - `DELETE /api/items/:id`: Menghapus barang.
 
-3. Buat Halaman UI Management (`frontend/src/app/dashboard/items/page.tsx`):
-   - Gunakan komponen `shadcn/ui` (`Card`, `Button`, `Input`, `Badge`).
-   - Sediakan tombol "Tambah Item" yang membuka Modal Form (Dialog) untuk input/edit data.
-   - Tampilkan daftar item dalam bentuk Tabel atau Grid Card yang rapi.
-   - Tambahkan aksi tombol Edit dan Hapus pada setiap baris data.
-   - Tambahkan menu navigasi **📦 Data Items** (`/dashboard/items`) di file `Sidebar.tsx`.
+3. Update Frontend API Client (`frontend/src/lib/api.ts`):
+   - Tambahkan fungsi pendukung untuk fetch categories dan CRUD items.
 
-JANGAN mengganggu endpoint autentikasi yang sudah ada. Fokus HANYA pada modul `karuna_items`.
+4. Buat Halaman Manajemen Stok Bangunan (`frontend/src/app/dashboard/items/page.tsx`):
+   - Gunakan komponen `shadcn/ui` (`Table`, `Card`, `Button`, `Input`, `Select`, `Dialog`, `Badge`).
+   - Form Modal Tambah/Edit Barang dengan placeholder khusus toko bangunan:
+     - **Nama Barang**: Ex: `"Kayu Meranti 4x6 x 4m"`, `"Semen Tiga Roda 50kg"`, `"Besi Beton 10mm SNI"`
+     - **Kategori**: Menggunakan Dropdown `<Select>` yang mengambil data dari API `GET /api/categories`.
+     - **Satuan**: Dropdown Pilihan (`Batang`, `Lembar`, `Sak`, `Kg`, `Meter`, `Pcs`, `Roll`, `Dus`).
+     - **Harga Jual (Rp)**: Input angka dengan placeholder `"50000"`.
+     - **Stok**: Input angka dengan placeholder `"100"`.
+     - **Deskripsi**: Textarea opsional.
+   - Tampilkan tabel barang yang memuat kolom: Nama Barang, Kategori, Satuan, Harga Jual (format Rupiah `Rp`), Stok, dan Tombol Aksi (Edit & Hapus).
+
+5. Update Sidebar Navigasi (`frontend/src/components/dashboard/Sidebar.tsx`):
+   - Tambahkan menu **🪵 Stok & Kayu** mengarah ke `/dashboard/items`.
+
+JANGAN mengubah logic autentikasi JWT.
+
+---
+
+### 📝 Prompt Fix - Perbaikan Category Fetching & Dropdown Select
+**Target:** Folder `backend/` & `frontend/`  
+**Model AI Recommendation:** Gemini Flash (Low Tier)
+
+---
+BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
+---
+
+Tugasmu adalah memperbaiki fitur pendaftaran kategori agar muncul di Dropdown Form Tambah/Edit Barang.
+
+Langkah pengerjaan:
+
+1. Di Backend (`backend/src/controllers/itemController.ts` & `backend/src/routes/itemRoutes.ts`):
+   - Pastikan ada endpoint `GET /api/categories` (atau `GET /api/items/categories`).
+   - Query mengambil seluruh data dari tabel `karuna_categories` diurutkan berdasarkan `name ASC`.
+   - Kembalikan array JSON: `[{ id: "...", name: "..." }]`.
+
+2. Di Frontend API Client (`frontend/src/lib/api.ts`):
+   - Tambahkan fungsi `getCategories()` yang memanggil endpoint `GET /api/categories`.
+
+3. Di Halaman Items (`frontend/src/app/dashboard/items/page.tsx`):
+   - Tambahkan `useEffect` saat halaman/modal dimuat untuk memanggil `getCategories()`.
+   - Simpan hasil kategori ke dalam state React (`const [categories, setCategories] = useState([])`).
+   - Map data `categories` ke dalam komponen `<Select>` / `<option>` di Form Tambah/Edit Barang:
+     - `value`: `category.id`
+     - `label/display`: `category.name`
+   - Berikan nilai default / placeholder: `"Pilih Kategori Barang"`.
+
+   ---
+
+### 📝 Prompt #10 - Modul CRUD Kategori & Validasi Unik Barang (Nama + Kategori)
+**Target:** Folder `backend/` & `frontend/`  
+**Model AI Recommendation:** Gemini Flash (Low Tier)
+
+---
+BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
+---
+
+Tugasmu adalah membuat Modul Manajemen Kategori dan menerapkan Validasi Anti-Redudansi pada Modul Barang.
+
+Langkah pengerjaan:
+
+1. Update Controller & Routes Kategori (`backend/src/controllers/` & `backend/src/routes/`):
+   - Tambahkan CRUD lengkap untuk Kategori:
+     - `POST /api/categories`: Menambah kategori baru (terima `name`, auto-generate `slug`).
+     - `PUT /api/categories/:id`: Mengubah nama kategori.
+     - `DELETE /api/categories/:id`: Menghapus kategori.
+   - Daftarkan route kategori secara rapi.
+
+2. Tambahkan Validasi Unik di `itemController.ts` (`createItem` & `updateItem`):
+   - Sebelum melakukan `INSERT` atau `UPDATE` ke `karuna_items`:
+     1. Ambil nama barang (bersihkan spasi dengan `.trim()`) dan `category_id`.
+     2. Lakukan query pengecekan ke tabel `karuna_items`:
+        - Filter `user_id = req.user.id`
+        - Filter `LOWER(name) = LOWER(trimmedName)`
+        - Filter `category_id = categoryId` (tangani jika null)
+        - Untuk `updateItem`, tambahkan penyeleksian ID: `.neq('id', itemId)`
+     3. Jika data ditemukan, **BATALKAN** proses simpan dan kembalikan status HTTP `400 (Bad Request)` dengan pesan:
+        `"Barang dengan nama '${name}' dan kategori yang sama sudah terdaftar!"`.
+
+3. Buat Halaman Manajemen Kategori UI (`frontend/src/app/dashboard/categories/page.tsx`):
+   - Gunakan komponen `shadcn/ui` (`Card`, `Table`, `Button`, `Input`, `Dialog`).
+   - Tampilkan tabel daftar kategori beserta tombol "Tambah Kategori", "Edit", dan "Hapus".
+   - Integrasikan API Client (`frontend/src/lib/api.ts`) untuk fungsi CRUD kategori.
+
+4. Update Sidebar Navigasi (`frontend/src/components/dashboard/Sidebar.tsx`):
+   - Tambahkan menu **🏷️ Kategori Barang** mengarah ke `/dashboard/categories`.
+
+5. Update Error Handling UI Tambah/Edit Barang (`frontend/src/app/dashboard/items/page.tsx`):
+   - Pastikan jika backend mengembalikan status `400` (karena nama & kategori duplikat), pesan error dari backend ditampilkan dengan jelas di dalam alert modal.
+
+   ---
+
+### 📝 Prompt #11 - Refactor Sidebar Navigasi dengan Group & Sub-Menu (Collapsible)
+**Target:** Folder `frontend/src/components/dashboard/Sidebar.tsx`  
+**Model AI Recommendation:** Gemini Flash (Low Tier)
+
+---
+BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
+---
+
+Tugasmu adalah merefactor komponen Sidebar (`frontend/src/components/dashboard/Sidebar.tsx`) agar mendukung pengelompokan menu dengan **Sub-Menu (Collapsible Dropdown)**.
+
+Langkah pengerjaan:
+
+1. Buat struktur data menu yang rapi dan modular:
+   ```typescript
+   interface MenuItem {
+     title: string;
+     href?: string;
+     icon?: any;
+     children?: MenuItem[];
+   }

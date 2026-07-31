@@ -11,6 +11,8 @@ import { LogOut, UserCircle, Settings, ChevronDown } from 'lucide-react';
 // Map of pathnames to page titles
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
+  '/dashboard/items': 'Stok & Kayu Bangunan',
+  '/dashboard/categories': 'Kategori Barang',
   '/dashboard/profile': 'Profil Saya',
   '/dashboard/settings': 'Pengaturan',
 };

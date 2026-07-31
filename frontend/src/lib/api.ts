@@ -107,4 +107,41 @@ export const updateProfile = (name: string) =>
 export const changePassword = (data: { oldPassword: string; newPassword: string }) =>
   api.put('/auth/change-password', data);
 
+// --- Categories API ---
+
+export const getCategories = () => api.get('/categories');
+
+export const createCategory = (name: string) => api.post('/categories', { name });
+
+export const updateCategory = (id: string, name: string) => api.put(`/categories/${id}`, { name });
+
+export const deleteCategory = (id: string) => api.delete(`/categories/${id}`);
+
+// --- Items API ---
+
+export const getItems = () => api.get('/items');
+
+export const createItem = (data: {
+  name: string;
+  category_id?: string;
+  unit: string;
+  price: number;
+  stock: number;
+  description?: string;
+}) => api.post('/items', data);
+
+export const updateItem = (
+  id: string,
+  data: {
+    name: string;
+    category_id?: string;
+    unit: string;
+    price: number;
+    stock: number;
+    description?: string;
+  }
+) => api.put(`/items/${id}`, data);
+
+export const deleteItem = (id: string) => api.delete(`/items/${id}`);
+
 export default api;

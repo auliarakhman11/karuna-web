@@ -6,48 +6,257 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
+  Boxes,
+  Tag,
   User,
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Menu,
+  ShoppingCart,
+  BarChart2,
+  Layers,
+  ClipboardList,
 } from 'lucide-react';
 
-interface NavItem {
-  label: string;
-  href: string;
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
+interface MenuItem {
+  title: string;
+  href?: string;
   icon: React.ReactNode;
+  children?: Omit<MenuItem, 'children'>[];
 }
 
-const navItems: NavItem[] = [
+interface MenuGroup {
+  groupLabel?: string;
+  items: MenuItem[];
+}
+
+// ─────────────────────────────────────────────
+// Menu Structure
+// ─────────────────────────────────────────────
+const menuGroups: MenuGroup[] = [
   {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: <LayoutDashboard className="w-5 h-5 shrink-0" />,
+    items: [
+      {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: <LayoutDashboard className="w-5 h-5 shrink-0" />,
+      },
+    ],
   },
   {
-    label: 'Profil Saya',
-    href: '/dashboard/profile',
-    icon: <User className="w-5 h-5 shrink-0" />,
+    groupLabel: 'Inventaris',
+    items: [
+      {
+        title: 'Stok Barang',
+        icon: <Boxes className="w-5 h-5 shrink-0" />,
+        children: [
+          {
+            title: 'Daftar Barang',
+            href: '/dashboard/items',
+            icon: <ClipboardList className="w-4 h-4 shrink-0" />,
+          },
+          {
+            title: 'Kategori Barang',
+            href: '/dashboard/categories',
+            icon: <Tag className="w-4 h-4 shrink-0" />,
+          },
+        ],
+      },
+      {
+        title: 'Pesanan',
+        icon: <ShoppingCart className="w-5 h-5 shrink-0" />,
+        children: [
+          {
+            title: 'Daftar Pesanan',
+            href: '/dashboard/orders',
+            icon: <ClipboardList className="w-4 h-4 shrink-0" />,
+          },
+        ],
+      },
+    ],
   },
   {
-    label: 'Pengaturan',
-    href: '/dashboard/settings',
-    icon: <Settings className="w-5 h-5 shrink-0" />,
+    groupLabel: 'Laporan',
+    items: [
+      {
+        title: 'Analitik',
+        href: '/dashboard/analytics',
+        icon: <BarChart2 className="w-5 h-5 shrink-0" />,
+      },
+    ],
+  },
+  {
+    groupLabel: 'Akun',
+    items: [
+      {
+        title: 'Profil Saya',
+        href: '/dashboard/profile',
+        icon: <User className="w-5 h-5 shrink-0" />,
+      },
+      {
+        title: 'Pengaturan',
+        href: '/dashboard/settings',
+        icon: <Settings className="w-5 h-5 shrink-0" />,
+      },
+    ],
   },
 ];
 
+// ─────────────────────────────────────────────
+// Props
+// ─────────────────────────────────────────────
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
-  const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+// ─────────────────────────────────────────────
+// Sub-menu Item (leaf node)
+// ─────────────────────────────────────────────
+interface SubItemProps {
+  item: Omit<MenuItem, 'children'>;
+  isCollapsed: boolean;
+  onMobileClose: () => void;
+}
 
-  const isActive = (href: string) =>
-    href === '/dashboard' ? pathname === href : pathname.startsWith(href);
+const SubNavItem: React.FC<SubItemProps> = ({ item, isCollapsed, onMobileClose }) => {
+  const pathname = usePathname();
+  const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href!));
+
+  if (isCollapsed) return null;
+
+  return (
+    <Link
+      href={item.href!}
+      onClick={onMobileClose}
+      className={cn(
+        'flex items-center gap-2.5 pl-9 pr-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
+        active
+          ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/25'
+          : 'text-slate-500 hover:bg-slate-800 hover:text-slate-200'
+      )}
+    >
+      {item.icon}
+      <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.title}</span>
+      {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}
+    </Link>
+  );
+};
+
+// ─────────────────────────────────────────────
+// Top-level Nav Item (with or without children)
+// ─────────────────────────────────────────────
+interface NavItemProps {
+  item: MenuItem;
+  isCollapsed: boolean;
+  onMobileClose: () => void;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) => {
+  const pathname = usePathname();
+
+  // Determine if any child is active (to auto-open the group)
+  const childActive = item.children?.some(
+    (c) => c.href && (pathname === c.href || pathname.startsWith(c.href))
+  ) ?? false;
+
+  const [open, setOpen] = useState(childActive);
+
+  // Leaf node (no children)
+  if (!item.children) {
+    const active =
+      item.href === '/dashboard'
+        ? pathname === item.href
+        : item.href
+        ? pathname.startsWith(item.href)
+        : false;
+
+    return (
+      <Link
+        href={item.href!}
+        onClick={onMobileClose}
+        title={isCollapsed ? item.title : undefined}
+        className={cn(
+          'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+          active
+            ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/25 shadow-sm'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+        )}
+      >
+        {item.icon}
+        {!isCollapsed && (
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.title}</span>
+        )}
+        {!isCollapsed && active && (
+          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+        )}
+      </Link>
+    );
+  }
+
+  // Parent node (has children — collapsible)
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        title={isCollapsed ? item.title : undefined}
+        className={cn(
+          'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+          childActive
+            ? 'text-indigo-400 bg-indigo-600/10'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+        )}
+      >
+        {item.icon}
+        {!isCollapsed && (
+          <>
+            <span className="whitespace-nowrap overflow-hidden text-ellipsis flex-1 text-left">
+              {item.title}
+            </span>
+            <ChevronDown
+              className={cn(
+                'w-4 h-4 shrink-0 text-slate-500 transition-transform duration-200',
+                open && 'rotate-180'
+              )}
+            />
+          </>
+        )}
+      </button>
+
+      {/* Sub-menu items */}
+      {!isCollapsed && (
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-300',
+            open ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0'
+          )}
+        >
+          <div className="space-y-0.5">
+            {item.children.map((child) => (
+              <SubNavItem
+                key={child.href}
+                item={child}
+                isCollapsed={isCollapsed}
+                onMobileClose={onMobileClose}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────
+// Sidebar Component
+// ─────────────────────────────────────────────
+export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <>
@@ -74,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
         <div className="flex items-center h-16 px-4 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="p-1.5 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30 shrink-0">
-              <LayoutDashboard className="w-5 h-5" />
+              <Layers className="w-5 h-5" />
             </div>
             {!collapsed && (
               <span className="font-bold text-base text-slate-100 whitespace-nowrap tracking-wide">
@@ -97,33 +306,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-          {navItems.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onMobileClose}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
-                  active
-                    ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/25 shadow-sm'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-                )}
-              >
-                {item.icon}
-                {!collapsed && (
-                  <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-                    {item.label}
-                  </span>
-                )}
-                {!collapsed && active && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
-                )}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-4">
+          {menuGroups.map((group, gi) => (
+            <div key={gi}>
+              {/* Group Label */}
+              {group.groupLabel && !collapsed && (
+                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600 select-none">
+                  {group.groupLabel}
+                </p>
+              )}
+              {/* Group Items */}
+              <div className="space-y-0.5">
+                {group.items.map((item, ii) => (
+                  <NavItem
+                    key={ii}
+                    item={item}
+                    isCollapsed={collapsed}
+                    onMobileClose={onMobileClose}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* Footer hint */}
@@ -137,6 +341,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
   );
 };
 
+// ─────────────────────────────────────────────
+// Mobile Toggle Button (used in Header)
+// ─────────────────────────────────────────────
 export const SidebarToggleButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     onClick={onClick}
