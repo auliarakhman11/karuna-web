@@ -144,4 +144,20 @@ export const updateItem = (
 
 export const deleteItem = (id: string) => api.delete(`/items/${id}`);
 
+// --- Sales API ---
+
+export interface SaleLineItem {
+  item_id: string;
+  quantity: number;
+  price: number;
+}
+
+export const createSale = (data: {
+  items: SaleLineItem[];
+  payment_method: string;
+  notes?: string;
+}) => api.post('/sales', data);
+
+export const getSales = () => api.get('/sales');
+
 export default api;

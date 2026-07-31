@@ -18,6 +18,8 @@ import {
   BarChart2,
   Layers,
   ClipboardList,
+  ShoppingBag,
+  History,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────
@@ -67,14 +69,24 @@ const menuGroups: MenuGroup[] = [
           },
         ],
       },
+    ],
+  },
+  {
+    groupLabel: 'Transaksi',
+    items: [
       {
-        title: 'Pesanan',
+        title: 'Penjualan (POS)',
+        href: '/dashboard/pos',
+        icon: <ShoppingBag className="w-5 h-5 shrink-0" />,
+      },
+      {
+        title: 'Riwayat Penjualan',
         icon: <ShoppingCart className="w-5 h-5 shrink-0" />,
         children: [
           {
-            title: 'Daftar Pesanan',
+            title: 'Semua Transaksi',
             href: '/dashboard/orders',
-            icon: <ClipboardList className="w-4 h-4 shrink-0" />,
+            icon: <History className="w-4 h-4 shrink-0" />,
           },
         ],
       },
@@ -160,7 +172,6 @@ interface NavItemProps {
 const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) => {
   const pathname = usePathname();
 
-  // Determine if any child is active (to auto-open the group)
   const childActive = item.children?.some(
     (c) => c.href && (pathname === c.href || pathname.startsWith(c.href))
   ) ?? false;
@@ -260,10 +271,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay — visible below md breakpoint */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden"
           onClick={onMobileClose}
         />
       )}
@@ -272,11 +283,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
       <aside
         className={cn(
           'fixed top-0 left-0 z-40 h-full flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300',
-          // Desktop: collapsible
-          collapsed ? 'w-[72px]' : 'w-64',
-          // Mobile: slide in/out
-          'lg:translate-x-0',
-          mobileOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'
+          // Desktop (≥md): always visible, collapsible
+          'md:translate-x-0',
+          collapsed ? 'md:w-[72px]' : 'md:w-64',
+          // Mobile (<md): slide drawer
+          mobileOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
         )}
       >
         {/* Logo Area */}
@@ -291,10 +302,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
               </span>
             )}
           </div>
-          {/* Desktop collapse toggle */}
+          {/* Desktop collapse toggle — only shown on md+ */}
           <button
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden lg:flex ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="hidden md:flex ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
             aria-label="Toggle sidebar"
           >
             {collapsed ? (
@@ -347,7 +358,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
 export const SidebarToggleButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     onClick={onClick}
-    className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+    className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
     aria-label="Open sidebar"
   >
     <Menu className="w-5 h-5" />

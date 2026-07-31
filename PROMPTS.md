@@ -502,3 +502,93 @@ Langkah pengerjaan:
      icon?: any;
      children?: MenuItem[];
    }
+
+
+---
+
+### 📝 Prompt #12 - Modul Kasir / Transaksi Penjualan (POS) & Auto Deduct Stock
+**Target:** Folder `backend/` & `frontend/`  
+**Model AI Recommendation:** Gemini Flash (Low Tier)
+
+---
+BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
+---
+
+Tugasmu adalah membuat Modul Transaksi Penjualan (POS) lengkap dari sisi Backend dan Frontend.
+
+Langkah pengerjaan:
+
+1. Buat Backend Controller & Routes Penjualan (`backend/src/controllers/saleController.ts` & `backend/src/routes/saleRoutes.ts`):
+   - `POST /api/sales`:
+     - Menerima payload: `{ items: [{ item_id, quantity, price }], payment_method, notes }`.
+     - Generate nomor invoice unik otomatis (contoh: `INV-20260731-XXXX`).
+     - Hitung total harga transaksi (`total_amount`).
+     - Simpan data ke `karuna_sales` dan detailnya ke `karuna_sale_items`.
+     - **PENTING (Auto Deduct Stock):** Kurangi `stock` di tabel `karuna_items` sesuai `quantity` barang yang dibeli pelanggan. Cek apakah stok cukup sebelum transaksi disimpan. Jika stok kurang, batalkan dan return status `400`.
+   - `GET /api/sales`: Mengambil riwayat transaksi penjualan milik user yang login.
+   - Daftarkan route di `app.ts` (`/api/sales`).
+
+2. Update Frontend API Client (`frontend/src/lib/api.ts`):
+   - Tambahkan fungsi `createSale(data)` dan `getSales()`.
+
+3. Buat Halaman UI Kasir/POS (`frontend/src/app/dashboard/pos/page.tsx`):
+   - Tampilan split-screen / 2 kolom modern:
+     - **Kolom Kiri (Katalog Barang):** Search bar pencarian barang + daftar grid card barang (menampilkan nama, kategori, harga Rp, dan sisa stok). Klik barang untuk menambahkan ke keranjang.
+     - **Kolom Kanan (Keranjang & Checkout):** Daftar barang pilihan, tombol `+` / `-` pengubah jumlah kuantitas, subtotal per item, kalkulasi Total Bayar, input metode pembayaran (Tunai / Transfer), dan tombol **"Proses Transaksi"**.
+   - Tampilkan Modal Nota / Struk Sukses sederhana setelah checkout berhasil.
+
+4. Hubungkan Menu Navigasi Sidebar (`frontend/src/components/dashboard/Sidebar.tsx`):
+   - Aktifkan rute **🛒 Penjualan (POS)** mengarah ke `/dashboard/pos` di dalam grup **Transaksi**.
+
+JANGAN merusak fungsi CRUD barang yang sudah ada.
+
+---
+
+### 📝 Prompt #13 - Full Frontend Mobile & Landscape Responsive Refactor
+**Target:** Folder `frontend/`  
+**Model AI Recommendation:** Gemini Flash (Low Tier)
+
+---
+BANGKITKAN PROMPT DI BAWAH INI KE AGENT:
+---
+
+Tugasmu adalah merombak (refactor) seluruh layout Frontend agar 100% Responsive di HP (Portrait & Landscape Mode), Tablet, dan Desktop.
+
+Langkah pengerjaan:
+
+1. Refactor Sidebar & Header Layout (`frontend/src/components/dashboard/`):
+   - **Sidebar (`Sidebar.tsx`):**
+     - Untuk layar desktop (`hidden md:flex md:w-64`): Tampilkan sidebar tetap di kiri.
+     - Untuk layar mobile (`md:hidden`): Buat drawer slide-over overlay (atau dialog backdrop) yang bisa dibuka/ditutup melalui state `isMobileOpen`.
+   - **Header (`Header.tsx`):**
+     - Sediakan tombol Hamburger Menu (`Menu` icon dari `lucide-react`) khusus di layar mobile (`md:hidden`) untuk mentrigger panggil mobile sidebar.
+     - Di bagian profil user, sembunyikan email pada layar kecil (`hidden sm:block`) agar header tetap ringkas dan tidak memakan space vertikal.
+     - Gunakan `sticky top-0 z-30 backdrop-blur` agar header rapat di atas tanpa menutupi konten.
+
+2. Refactor Dashboard Shell Layout (`frontend/src/app/dashboard/layout.tsx`):
+   - Gunakan struktur flexbox yang responsif:
+     ```tsx
+     <div className="min-h-screen bg-slate-950 text-white flex flex-col md:flex-row w-full overflow-x-hidden">
+       {/* Sidebar Desktop & Mobile Drawer */}
+       <Sidebar mobileOpen="{isMobileOpen}" setMobileOpen="{setIsMobileOpen}"/>
+       
+       <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-y-auto">
+         <Header onMenuClick="{()"> setIsMobileOpen(true)} />
+         <main className="flex-1 p-4 sm:p-6 w-full max-w-7xl mx-auto">
+           {children}
+         </main>
+       </div>
+     </div>
+     ```
+
+3. Refactor Halaman Kasir / POS (`frontend/src/app/dashboard/pos/page.tsx`):
+   - Ubah layout split-screen menjadi responsif:
+     - Gunakan `grid grid-cols-1 lg:grid-cols-12 gap-6`.
+     - Katalog Barang mengambil `lg:col-span-7` atau `lg:col-span-8`.
+     - Ringkasan Keranjang mengambil `lg:col-span-5` atau `lg:col-span-4`.
+   - Pastikan di layar HP/landscape, Keranjang dan Katalog barang otomatis menumpuk dari atas ke bawah dan seluruh area halaman dapat di-scroll dengan mulus.
+
+4. Refactor Tabel Data Master (`items/page.tsx` & `categories/page.tsx`):
+   - Bungkus semua tabel HTML/shadcn `<Table>` di dalam pembungkus scroll horizontal: `<div className="w-full overflow-x-auto">...</div>` agar tabel tidak memotong tampilan layar HP.
+
+JANGAN mengubah logic API backend. Fokus HANYA pada penyempurnaan CSS Tailwind dan responsivitas layout di frontend.

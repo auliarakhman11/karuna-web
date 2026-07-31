@@ -35,17 +35,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-slate-950 text-white flex w-full overflow-x-hidden">
+      {/* Sidebar: fixed on desktop, drawer on mobile */}
       <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
-      {/* Main area: shifted on desktop to accommodate sidebar */}
-      <div className="flex-1 flex flex-col lg:ml-64 transition-all duration-300">
+      {/* Main area */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 transition-all duration-300">
         {/* Sticky Header */}
         <Header onSidebarToggle={() => setMobileOpen((v) => !v)} />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full">
           {children}
         </main>
       </div>

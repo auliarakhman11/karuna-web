@@ -13,6 +13,7 @@ const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/dashboard/items': 'Stok & Kayu Bangunan',
   '/dashboard/categories': 'Kategori Barang',
+  '/dashboard/pos': 'Kasir / Transaksi Penjualan',
   '/dashboard/profile': 'Profil Saya',
   '/dashboard/settings': 'Pengaturan',
 };
@@ -42,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ onSidebarToggle }) => {
   };
 
   return (
-    <header className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-20">
+    <header className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30">
       {/* Left: Mobile toggle + Page title */}
       <div className="flex items-center gap-3">
         <SidebarToggleButton onClick={onSidebarToggle} />
