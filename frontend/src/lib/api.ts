@@ -9,9 +9,10 @@ export const setAccessToken = (token: string | null) => {
 export const getAccessToken = (): string | null => accessToken;
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
   withCredentials: true,
 });
+
 
 // Request Interceptor: Attach Access Token if available
 api.interceptors.request.use(
@@ -71,10 +72,11 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_API_URL || '/api'}/auth/refresh`,
           {},
           { withCredentials: true }
         );
+
 
         const newAccessToken = data.accessToken;
         setAccessToken(newAccessToken);

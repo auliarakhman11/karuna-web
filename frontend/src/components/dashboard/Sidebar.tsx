@@ -203,7 +203,7 @@ interface SubItemProps {
 }
 
 const SubNavItem: React.FC<SubItemProps> = ({ item, isCollapsed, onMobileClose }) => {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href!));
 
   if (isCollapsed) return null;
@@ -236,11 +236,12 @@ interface NavItemProps {
 }
 
 const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) => {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
 
   const childActive = item.children?.some(
     (c) => c.href && (pathname === c.href || pathname.startsWith(c.href))
   ) ?? false;
+
 
   const [open, setOpen] = useState(childActive);
 

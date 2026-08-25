@@ -38,7 +38,8 @@ export const Header: React.FC<HeaderProps> = ({ onSidebarToggle }) => {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  const pageTitle = pageTitles[pathname] ?? 'Dashboard';
+  const pageTitle = (pathname && pageTitles[pathname]) ?? 'Dashboard';
+
 
 
 
