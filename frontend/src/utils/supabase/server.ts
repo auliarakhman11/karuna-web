@@ -6,9 +6,13 @@ export function createClient() {
     process.env.SUPABASE_URL ||
     'https://jfrurdcuexcejihbgqru.supabase.co';
   const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
     'sb_publishable_ocvj_KqM3xzm1U0ZGOArXQ_lFbhykmr';
 
   return createSupabaseClient(supabaseUrl, supabaseKey);
+
 }
