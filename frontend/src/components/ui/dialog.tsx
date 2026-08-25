@@ -9,7 +9,9 @@ interface DialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  footer?: React.ReactNode;
   children: React.ReactNode;
+  className?: string;
 }
 
 export const Dialog: React.FC<DialogProps> = ({
@@ -17,7 +19,9 @@ export const Dialog: React.FC<DialogProps> = ({
   onOpenChange,
   title,
   description,
+  footer,
   children,
+  className,
 }) => {
   if (!open) return null;
 
@@ -30,8 +34,14 @@ export const Dialog: React.FC<DialogProps> = ({
       />
 
       {/* Dialog Modal */}
-      <div className="relative z-50 w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+      <div
+        className={cn(
+          'relative z-50 w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden',
+          className
+        )}
+      >
+        {/* Sticky Header */}
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-800 shrink-0 bg-slate-900 z-10">
           <div>
             <h3 className="text-lg font-semibold text-slate-100">{title}</h3>
             {description && (
@@ -46,8 +56,19 @@ export const Dialog: React.FC<DialogProps> = ({
           </button>
         </div>
 
-        <div className="mt-4">{children}</div>
+        {/* Scrollable Body */}
+        <div className="p-6 overflow-y-auto max-h-[80vh] flex-1">
+          {children}
+        </div>
+
+        {/* Sticky Footer (if provided) */}
+        {footer && (
+          <div className="p-4 px-6 border-t border-slate-800 shrink-0 bg-slate-900 z-10">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+

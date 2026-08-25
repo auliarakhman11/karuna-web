@@ -11,6 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const { user, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   // Auth Guard: redirect to login if not authenticated
   useEffect(() => {
@@ -35,14 +36,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex w-full overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex w-full overflow-x-hidden transition-colors duration-150">
       {/* Sidebar: fixed on desktop, drawer on mobile */}
-      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} collapsed={collapsed} setCollapsed={setCollapsed} />
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen md:ml-64 transition-all duration-300">
+      <div className={`flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300 ${collapsed ? 'md:ml-[72px]' : 'md:ml-64'}`}>
         {/* Sticky Header */}
         <Header onSidebarToggle={() => setMobileOpen((v) => !v)} />
+
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full">

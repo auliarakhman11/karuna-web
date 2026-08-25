@@ -20,6 +20,13 @@ import {
   ClipboardList,
   ShoppingBag,
   History,
+  Truck,
+  ClipboardCheck,
+  Receipt,
+  Users,
+  Scale,
+  BookOpen,
+  PieChart,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────
@@ -67,7 +74,17 @@ const menuGroups: MenuGroup[] = [
             href: '/dashboard/categories',
             icon: <Tag className="w-4 h-4 shrink-0" />,
           },
+          {
+            title: 'Opname & Retur',
+            href: '/dashboard/inventory',
+            icon: <ClipboardCheck className="w-4 h-4 shrink-0" />,
+          },
         ],
+      },
+      {
+        title: 'Supplier & Restock',
+        href: '/dashboard/suppliers',
+        icon: <Truck className="w-5 h-5 shrink-0" />,
       },
     ],
   },
@@ -90,15 +107,62 @@ const menuGroups: MenuGroup[] = [
           },
         ],
       },
+      {
+        title: 'Pengeluaran',
+        icon: <Receipt className="w-5 h-5 shrink-0" />,
+        children: [
+          {
+            title: 'Transaksi Beban',
+            href: '/dashboard/expenses',
+            icon: <Receipt className="w-4 h-4 shrink-0" />,
+          },
+          {
+            title: 'Jenis / Kategori',
+            href: '/dashboard/expenses/categories',
+            icon: <Tag className="w-4 h-4 shrink-0" />,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    groupLabel: 'Keuangan & Modal',
+    items: [
+      {
+        title: 'Investor & Dividen',
+        icon: <Users className="w-5 h-5 shrink-0" />,
+        children: [
+          {
+            title: 'Daftar Investor',
+            href: '/dashboard/investors',
+            icon: <Users className="w-4 h-4 shrink-0" />,
+          },
+          {
+            title: 'Bagi Hasil (Dividen)',
+            href: '/dashboard/investors/dividends',
+            icon: <PieChart className="w-4 h-4 shrink-0" />,
+          },
+        ],
+      },
     ],
   },
   {
     groupLabel: 'Laporan',
     items: [
       {
-        title: 'Analitik',
-        href: '/dashboard/analytics',
-        icon: <BarChart2 className="w-5 h-5 shrink-0" />,
+        title: 'Laporan Keuangan',
+        href: '/dashboard/reports/financial',
+        icon: <Scale className="w-5 h-5 shrink-0" />,
+      },
+      {
+        title: 'Buku Jurnal Umum',
+        href: '/dashboard/reports/journals',
+        icon: <BookOpen className="w-5 h-5 shrink-0" />,
+      },
+      {
+        title: 'Lap. Ongkos Kirim',
+        href: '/dashboard/reports/shipping',
+        icon: <Truck className="w-5 h-5 shrink-0" />,
       },
     ],
   },
@@ -125,6 +189,8 @@ const menuGroups: MenuGroup[] = [
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
+  collapsed: boolean;
+  setCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // ─────────────────────────────────────────────
@@ -149,13 +215,13 @@ const SubNavItem: React.FC<SubItemProps> = ({ item, isCollapsed, onMobileClose }
       className={cn(
         'flex items-center gap-2.5 pl-9 pr-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
         active
-          ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/25'
-          : 'text-slate-500 hover:bg-slate-800 hover:text-slate-200'
+          ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25'
+          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
       )}
     >
       {item.icon}
       <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.title}</span>
-      {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}
+      {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 shrink-0" />}
     </Link>
   );
 };
@@ -195,8 +261,8 @@ const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) =
         className={cn(
           'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
           active
-            ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/25 shadow-sm'
-            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+            ? 'bg-indigo-600/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 shadow-sm'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
         )}
       >
         {item.icon}
@@ -204,7 +270,7 @@ const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) =
           <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.title}</span>
         )}
         {!isCollapsed && active && (
-          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 shrink-0" />
         )}
       </Link>
     );
@@ -219,8 +285,8 @@ const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) =
         className={cn(
           'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
           childActive
-            ? 'text-indigo-400 bg-indigo-600/10'
-            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+            ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-600/10'
+            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
         )}
       >
         {item.icon}
@@ -231,13 +297,14 @@ const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) =
             </span>
             <ChevronDown
               className={cn(
-                'w-4 h-4 shrink-0 text-slate-500 transition-transform duration-200',
+                'w-4 h-4 shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-200',
                 open && 'rotate-180'
               )}
             />
           </>
         )}
       </button>
+
 
       {/* Sub-menu items */}
       {!isCollapsed && (
@@ -266,8 +333,7 @@ const NavItem: React.FC<NavItemProps> = ({ item, isCollapsed, onMobileClose }) =
 // ─────────────────────────────────────────────
 // Sidebar Component
 // ─────────────────────────────────────────────
-export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) => {
-  const [collapsed, setCollapsed] = useState(false);
+export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose, collapsed, setCollapsed }) => {
 
   return (
     <>
@@ -282,7 +348,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-40 h-full flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300',
+          'fixed top-0 left-0 z-40 h-full flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300',
           // Desktop (≥md): always visible, collapsible
           'md:translate-x-0',
           collapsed ? 'md:w-[72px]' : 'md:w-64',
@@ -291,13 +357,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
         )}
       >
         {/* Logo Area */}
-        <div className="flex items-center h-16 px-4 border-b border-slate-800 shrink-0">
+        <div className="flex items-center h-16 px-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="p-1.5 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30 shrink-0">
+            <div className="p-1.5 bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-500/30 shrink-0">
               <Layers className="w-5 h-5" />
             </div>
             {!collapsed && (
-              <span className="font-bold text-base text-slate-100 whitespace-nowrap tracking-wide">
+              <span className="font-bold text-base text-slate-900 dark:text-slate-100 whitespace-nowrap tracking-wide">
                 Karuna Web
               </span>
             )}
@@ -305,7 +371,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
           {/* Desktop collapse toggle — only shown on md+ */}
           <button
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden md:flex ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="hidden md:flex ml-auto p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             aria-label="Toggle sidebar"
           >
             {collapsed ? (
@@ -322,7 +388,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
             <div key={gi}>
               {/* Group Label */}
               {group.groupLabel && !collapsed && (
-                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600 select-none">
+                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-600 select-none">
                   {group.groupLabel}
                 </p>
               )}
@@ -343,7 +409,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
 
         {/* Footer hint */}
         {!collapsed && (
-          <div className="px-4 py-4 border-t border-slate-800 text-xs text-slate-600 shrink-0">
+          <div className="px-4 py-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-600 shrink-0">
             Karuna Web &copy; {new Date().getFullYear()}
           </div>
         )}
@@ -358,9 +424,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onMobileClose }) =
 export const SidebarToggleButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     onClick={onClick}
-    className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+    className="md:hidden p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
     aria-label="Open sidebar"
   >
     <Menu className="w-5 h-5" />
   </button>
 );
+

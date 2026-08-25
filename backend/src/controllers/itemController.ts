@@ -49,7 +49,14 @@ export const getItems = async (req: AuthenticatedRequest, res: Response): Promis
       return;
     }
 
-    res.status(200).json({ items: data });
+    const items = (data || []).map((item: any) => ({
+      ...item,
+      buy_price: Number(item.buy_price) || 0,
+      price: Number(item.price) || 0,
+      sell_price: Number(item.price) || 0,
+    }));
+
+    res.status(200).json({ items });
   } catch (error: any) {
     console.error('Fetch Items Exception:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
@@ -60,7 +67,7 @@ export const getItems = async (req: AuthenticatedRequest, res: Response): Promis
 export const createItem = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
-    const { name, category_id, unit, price, stock, description } = req.body;
+    const { name, category_id, unit, price, sell_price, buy_price, stock, description } = req.body;
 
     if (!name || name.trim() === '') {
       res.status(400).json({ message: 'Nama barang wajib diisi' });
@@ -69,6 +76,8 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
 
     const trimmedName = name.trim();
     const validCategoryId = isValidUUID(category_id) ? category_id : null;
+    const finalPrice = Number(sell_price ?? price) || 0;
+    const finalBuyPrice = Number(buy_price) || 0;
 
     // Check duplicate item by user_id + LOWER(name) + category_id
     let duplicateQuery = supabase
@@ -92,19 +101,20 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    const { data, error } = await supabase
+    const itemPayload: any = {
+      user_id: userId,
+      category_id: validCategoryId,
+      name: trimmedName,
+      unit: unit?.trim() || 'Batang',
+      price: finalPrice,
+      buy_price: finalBuyPrice,
+      stock: Number(stock) || 0,
+      description: description?.trim() || '',
+    };
+
+    let { data, error } = await supabase
       .from(TABLES.ITEMS)
-      .insert([
-        {
-          user_id: userId,
-          category_id: validCategoryId,
-          name: trimmedName,
-          unit: unit?.trim() || 'Batang',
-          price: Number(price) || 0,
-          stock: Number(stock) || 0,
-          description: description?.trim() || '',
-        },
-      ])
+      .insert([itemPayload])
       .select(`
         *,
         category:karuna_categories(id, name)
@@ -112,12 +122,36 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
       .single();
 
     if (error) {
-      console.error('DB Insert Item Error:', error);
-      res.status(500).json({ message: error.message || 'Gagal menambahkan barang', error: error.message });
-      return;
+      console.warn('DB Insert Item with buy_price warning, trying fallback without buy_price if column is missing:', error.message);
+      // Fallback if buy_price column does not exist yet
+      const fallbackPayload = { ...itemPayload };
+      delete fallbackPayload.buy_price;
+
+      const { data: fbData, error: fbError } = await supabase
+        .from(TABLES.ITEMS)
+        .insert([fallbackPayload])
+        .select(`
+          *,
+          category:karuna_categories(id, name)
+        `)
+        .single();
+
+      if (fbError) {
+        console.error('DB Insert Item Error:', fbError);
+        res.status(500).json({ message: fbError.message || 'Gagal menambahkan barang', error: fbError.message });
+        return;
+      }
+      data = fbData;
     }
 
-    res.status(201).json({ message: 'Barang berhasil ditambahkan', item: data });
+    const enriched = data ? {
+      ...data,
+      buy_price: Number(data.buy_price) || finalBuyPrice,
+      price: Number(data.price) || finalPrice,
+      sell_price: Number(data.price) || finalPrice,
+    } : data;
+
+    res.status(201).json({ message: 'Barang berhasil ditambahkan', item: enriched });
   } catch (error: any) {
     console.error('Create Item Exception:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
@@ -129,7 +163,7 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response): Prom
   try {
     const userId = req.user?.userId;
     const { id } = req.params;
-    const { name, category_id, unit, price, stock, description } = req.body;
+    const { name, category_id, unit, price, sell_price, buy_price, stock, description } = req.body;
 
     if (!name || name.trim() === '') {
       res.status(400).json({ message: 'Nama barang wajib diisi' });
@@ -138,6 +172,8 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response): Prom
 
     const trimmedName = name.trim();
     const validCategoryId = isValidUUID(category_id) ? category_id : null;
+    const finalPrice = Number(sell_price ?? price) || 0;
+    const finalBuyPrice = Number(buy_price) || 0;
 
     // Check duplicate item excluding current item ID
     let duplicateQuery = supabase
@@ -162,17 +198,20 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    const { data, error } = await supabase
+    const updatePayload: any = {
+      category_id: validCategoryId,
+      name: trimmedName,
+      unit: unit?.trim() || 'Batang',
+      price: finalPrice,
+      buy_price: finalBuyPrice,
+      stock: Number(stock) || 0,
+      description: description?.trim() || '',
+      updated_at: new Date().toISOString(),
+    };
+
+    let { data, error } = await supabase
       .from(TABLES.ITEMS)
-      .update({
-        category_id: validCategoryId,
-        name: trimmedName,
-        unit: unit?.trim() || 'Batang',
-        price: Number(price) || 0,
-        stock: Number(stock) || 0,
-        description: description?.trim() || '',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', id)
       .eq('user_id', userId)
       .select(`
@@ -182,9 +221,27 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response): Prom
       .single();
 
     if (error) {
-      console.error('DB Update Item Error:', error);
-      res.status(500).json({ message: error.message || 'Gagal memperbarui barang', error: error.message });
-      return;
+      console.warn('DB Update Item with buy_price warning, trying fallback without buy_price:', error.message);
+      const fallbackPayload = { ...updatePayload };
+      delete fallbackPayload.buy_price;
+
+      const { data: fbData, error: fbError } = await supabase
+        .from(TABLES.ITEMS)
+        .update(fallbackPayload)
+        .eq('id', id)
+        .eq('user_id', userId)
+        .select(`
+          *,
+          category:karuna_categories(id, name)
+        `)
+        .single();
+
+      if (fbError) {
+        console.error('DB Update Item Error:', fbError);
+        res.status(500).json({ message: fbError.message || 'Gagal memperbarui barang', error: fbError.message });
+        return;
+      }
+      data = fbData;
     }
 
     if (!data) {
@@ -192,7 +249,14 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    res.status(200).json({ message: 'Barang berhasil diperbarui', item: data });
+    const enriched = {
+      ...data,
+      buy_price: Number(data.buy_price) || finalBuyPrice,
+      price: Number(data.price) || finalPrice,
+      sell_price: Number(data.price) || finalPrice,
+    };
+
+    res.status(200).json({ message: 'Barang berhasil diperbarui', item: enriched });
   } catch (error: any) {
     console.error('Update Item Exception:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
